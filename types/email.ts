@@ -19,12 +19,15 @@ export interface Connector {
   endY: number
   text: string
   actionNodePosition?: { x: number; y: number }
-  state?: 'active' | 'pending' | 'completed' | 'error'
-  type?: 'compose' | 'send' | 'forward' | 'reply' | 'share' | 'report'
+  state?: "active" | "pending" | "completed" | "error"
+  type?: "compose" | "send" | "forward" | "reply" | "share" | "report"
   label?: string
+  startOffsetX?: number
+  startOffsetY?: number
+  toEmailId?: string // Track which email the connector ends at
 }
 
-export type FilterType = 'all' | 'read' | 'unread' | 'starred'
+export type FilterType = "all" | "read" | "unread" | "starred"
 
 export interface ComposeData {
   subject: string
@@ -36,4 +39,4 @@ export interface Action {
   id: string
   label: string
   icon: any
-} 
+}

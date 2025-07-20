@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
-import { Email, Connector, FilterType, ComposeData, Action } from "@/types/email"
+import {
+  Email,
+  Connector,
+  FilterType,
+  ComposeData,
+  Action,
+} from "@/types/email"
 import { Send, Forward, Reply, Share, Flag } from "lucide-react"
 import React from "react"
 
@@ -12,7 +18,8 @@ export function useEmailConnector() {
       id: "1",
       sender: "Alice Cooper",
       subject: "Budget Approval Request",
-      preview: "I need your approval for the budget allocation for the new project. Please review the attached documents and let me know if you have any questions",
+      preview:
+        "I need your approval for the budget allocation for the new project. Please review the attached documents and let me know if you have any questions",
       isRead: false,
       isStarred: false,
       isMinimized: false,
@@ -23,7 +30,8 @@ export function useEmailConnector() {
       id: "2",
       sender: "Bob Wilson",
       subject: "Team Meeting Tomorrow",
-      preview: "Hi team, just a reminder that we have our weekly meeting tomorrow at 10 AM. Please prepare your updates and join on time",
+      preview:
+        "Hi team, just a reminder that we have our weekly meeting tomorrow at 10 AM. Please prepare your updates and join on time",
       isRead: true,
       isStarred: false,
       isMinimized: false,
@@ -34,7 +42,8 @@ export function useEmailConnector() {
       id: "3",
       sender: "Carol Davis",
       subject: "Project Update - Q4 Goals",
-      preview: "Here's the latest update on our Q4 goals. We're making good progress on most fronts, but there are a few areas that need attention",
+      preview:
+        "Here's the latest update on our Q4 goals. We're making good progress on most fronts, but there are a few areas that need attention",
       isRead: false,
       isStarred: true,
       isMinimized: false,
@@ -45,7 +54,8 @@ export function useEmailConnector() {
       id: "4",
       sender: "David Miller",
       subject: "Client Feedback Summary",
-      preview: "I've compiled the client feedback from our recent survey. The results are quite positive overall, with some valuable insights for improvement",
+      preview:
+        "I've compiled the client feedback from our recent survey. The results are quite positive overall, with some valuable insights for improvement",
       isRead: true,
       isStarred: false,
       isMinimized: false,
@@ -56,7 +66,8 @@ export function useEmailConnector() {
       id: "5",
       sender: "Eva Thompson",
       subject: "New Feature Launch",
-      preview: "Great news! Our new feature is ready for launch. The development team has completed all testing and we're good to go live next week",
+      preview:
+        "Great news! Our new feature is ready for launch. The development team has completed all testing and we're good to go live next week",
       isRead: false,
       isStarred: false,
       isMinimized: false,
@@ -76,20 +87,28 @@ export function useEmailConnector() {
     currentX: number
     currentY: number
   } | null>(null)
-  const [contextMenu, setContextMenu] = useState<{ emailId: string; x: number; y: number } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{
+    emailId: string
+    x: number
+    y: number
+  } | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [draggedActionNode, setDraggedActionNode] = useState<string | null>(null)
+  const [draggedActionNode, setDraggedActionNode] = useState<string | null>(
+    null
+  )
   const [composeMode, setComposeMode] = useState<string | null>(null)
   const [composeData, setComposeData] = useState<ComposeData>({
     subject: "",
     recipient: "",
-    content: ""
+    content: "",
   })
-  const [composeConnectorId, setComposeConnectorId] = useState<string | null>(null)
+  const [composeConnectorId, setComposeConnectorId] = useState<string | null>(
+    null
+  )
   const [appStarted, setAppStarted] = useState(false)
   const [isCanvasDragging, setIsCanvasDragging] = useState(false)
   const [dragEndTime, setDragEndTime] = useState(0)
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all')
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all")
 
   // Refs
   const actionNodeDragOffset = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -107,17 +126,17 @@ export function useEmailConnector() {
   ]
 
   // Computed values
-  const filteredActions = actions.filter(action =>
+  const filteredActions = actions.filter((action) =>
     action.label.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const filteredEmails = emails.filter(email => {
+  const filteredEmails = emails.filter((email) => {
     switch (activeFilter) {
-      case 'read':
+      case "read":
         return email.isRead
-      case 'unread':
+      case "unread":
         return !email.isRead
-      case 'starred':
+      case "starred":
         return email.isStarred
       default:
         return true
@@ -127,7 +146,10 @@ export function useEmailConnector() {
   // Event handlers
   const handleEmailMouseDown = useCallback(
     (e: React.MouseEvent, emailId: string) => {
-      if (e.target instanceof HTMLElement && e.target.closest(".connector-handle")) {
+      if (
+        e.target instanceof HTMLElement &&
+        e.target.closest(".connector-handle")
+      ) {
         return
       }
 
@@ -145,75 +167,102 @@ export function useEmailConnector() {
         }
 
         setEmails((prev) =>
-          prev.map((em) => (em.id === emailId ? { ...em, zIndex: Math.max(...prev.map((e) => e.zIndex)) + 1 } : em)),
+          prev.map((em) =>
+            em.id === emailId
+              ? { ...em, zIndex: Math.max(...prev.map((e) => e.zIndex)) + 1 }
+              : em
+          )
         )
       }
     },
-    [emails],
+    [emails]
   )
 
-  const handleConnectorStart = useCallback((e: React.MouseEvent, emailId: string) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const handleConnectorStart = useCallback(
+    (e: React.MouseEvent, emailId: string) => {
+      e.preventDefault()
+      e.stopPropagation()
 
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      const startX = e.clientX - rect.left
-      const startY = e.clientY - rect.top
+      if (containerRef.current) {
+        const email = emails.find((e) => e.id === emailId)
+        if (!email) return
 
-      setIsCreatingConnector(true)
-      setIsCanvasDragging(true)
-      setCurrentConnector({
-        fromEmailId: emailId,
-        startX,
-        startY,
-        currentX: startX,
-        currentY: startY,
-      })
-    }
-  }, [])
+        const rect = containerRef.current.getBoundingClientRect()
 
-  const handleActionNodeMouseDown = useCallback((e: React.MouseEvent, connectorId: string) => {
-    if (e.target instanceof HTMLElement && 
-        (e.target.closest('input') || e.target.closest('.action-dropdown'))) {
-      return;
-    }
-    
-    e.preventDefault()
-    setDraggedActionNode(connectorId)
-    setIsCanvasDragging(true)
-    const connector = connectors.find((c) => c.id === connectorId)
-    if (connector && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      actionNodeDragOffset.current = {
-        x: e.clientX - rect.left - (connector.actionNodePosition?.x ?? connector.endX),
-        y: e.clientY - rect.top - (connector.actionNodePosition?.y ?? connector.endY),
+        // Get the exact position of the connector handle by using the mouse event
+        // The mouse event gives us the exact position where the user clicked
+        const startX = e.clientX - rect.left
+        const startY = e.clientY - rect.top
+
+        console.log("Starting connector from email:", emailId)
+        console.log("Email position:", email.position)
+        console.log("Mouse position:", { x: e.clientX, y: e.clientY })
+        console.log("Calculated start position:", { startX, startY })
+
+        setIsCreatingConnector(true)
+        setIsCanvasDragging(true)
+        setCurrentConnector({
+          fromEmailId: emailId,
+          startX,
+          startY,
+          currentX: startX,
+          currentY: startY,
+        })
       }
-    }
-  }, [connectors])
+    },
+    [emails]
+  )
+
+  const handleActionNodeMouseDown = useCallback(
+    (e: React.MouseEvent, connectorId: string) => {
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target.closest("input") || e.target.closest(".action-dropdown"))
+      ) {
+        return
+      }
+
+      e.preventDefault()
+      setDraggedActionNode(connectorId)
+      setIsCanvasDragging(true)
+      const connector = connectors.find((c) => c.id === connectorId)
+      if (connector && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        actionNodeDragOffset.current = {
+          x:
+            e.clientX -
+            rect.left -
+            (connector.actionNodePosition?.x ?? connector.endX),
+          y:
+            e.clientY -
+            rect.top -
+            (connector.actionNodePosition?.y ?? connector.endY),
+        }
+      }
+    },
+    [connectors]
+  )
 
   // Email actions
   const toggleEmailMinimize = useCallback((emailId: string) => {
     setEmails((prev) =>
       prev.map((e) =>
-        e.id === emailId ? { ...e, isMinimized: !e.isMinimized } : e,
-      ),
+        e.id === emailId ? { ...e, isMinimized: !e.isMinimized } : e
+      )
     )
   }, [])
 
   const starEmail = useCallback((emailId: string) => {
     setEmails((prev) =>
       prev.map((e) =>
-        e.id === emailId ? { ...e, isStarred: !e.isStarred } : e,
-      ),
+        e.id === emailId ? { ...e, isStarred: !e.isStarred } : e
+      )
     )
   }, [])
 
   const toggleEmailRead = useCallback((emailId: string) => {
     setEmails((prev) =>
-      prev.map((e) =>
-        e.id === emailId ? { ...e, isRead: !e.isRead } : e,
-      ),
+      prev.map((e) => (e.id === emailId ? { ...e, isRead: !e.isRead } : e))
     )
   }, [])
 
@@ -221,50 +270,68 @@ export function useEmailConnector() {
     setEmails((prev) => prev.filter((e) => e.id !== emailId))
   }, [])
 
-  const openContextMenu = useCallback((e: React.MouseEvent, emailId: string) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      emailId: emailId,
-    })
-  }, [])
+  const openContextMenu = useCallback(
+    (e: React.MouseEvent, emailId: string) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        emailId: emailId,
+      })
+    },
+    []
+  )
 
   const closeContextMenu = useCallback(() => {
     setContextMenu(null)
   }, [])
 
   // Connector actions
-  const updateConnectorState = useCallback((connectorId: string, state: 'active' | 'pending' | 'completed' | 'error') => {
-    setConnectors(prev => prev.map(c => 
-      c.id === connectorId ? { ...c, state } : c
-    ))
-  }, [])
+  const updateConnectorState = useCallback(
+    (
+      connectorId: string,
+      state: "active" | "pending" | "completed" | "error"
+    ) => {
+      setConnectors((prev) =>
+        prev.map((c) => (c.id === connectorId ? { ...c, state } : c))
+      )
+    },
+    []
+  )
 
-  const addConnector = useCallback((connector: Connector) => {
-    setConnectors(prev => [...prev, connector])
-    
-    if (connector.type === 'send') {
-      setTimeout(() => {
-        updateConnectorState(connector.id, 'completed')
-      }, 1000)
-    }
-  }, [updateConnectorState])
+  const addConnector = useCallback(
+    (connector: Connector) => {
+      setConnectors((prev) => [...prev, connector])
 
-  const deleteConnector = useCallback((connectorId: string) => {
-    setConnectors((prev) => prev.filter((c) => c.id !== connectorId))
-    if (composeMode === connectorId) {
-      setComposeMode(null)
-      setComposeConnectorId(null)
-      setComposeData({ subject: "", recipient: "", content: "" })
-    }
-  }, [composeMode])
+      if (connector.type === "send") {
+        setTimeout(() => {
+          updateConnectorState(connector.id, "completed")
+        }, 1000)
+      }
+    },
+    [updateConnectorState]
+  )
+
+  const deleteConnector = useCallback(
+    (connectorId: string) => {
+      setConnectors((prev) => prev.filter((c) => c.id !== connectorId))
+      if (composeMode === connectorId) {
+        setComposeMode(null)
+        setComposeConnectorId(null)
+        setComposeData({ subject: "", recipient: "", content: "" })
+      }
+    },
+    [composeMode]
+  )
 
   // Compose actions
-  const handleComposeDataChange = useCallback((field: string, value: string) => {
-    setComposeData(prev => ({ ...prev, [field]: value }))
-  }, [])
+  const handleComposeDataChange = useCallback(
+    (field: string, value: string) => {
+      setComposeData((prev) => ({ ...prev, [field]: value }))
+    },
+    []
+  )
 
   const handleComposeCancel = useCallback(() => {
     setComposeMode(null)
@@ -272,85 +339,70 @@ export function useEmailConnector() {
     setComposeData({ subject: "", recipient: "", content: "" })
   }, [])
 
-  const handleComposeSend = useCallback((connectorId: string, actionNode: { x: number; y: number }) => {
-    if (composeData.recipient && composeData.subject && composeData.content) {
-      const newEmail: Email = {
-        id: Date.now().toString(),
-        sender: "You",
-        subject: composeData.subject,
-        preview: composeData.content.substring(0, 100),
-        isRead: false,
-        isStarred: false,
-        isMinimized: false,
-        position: { 
-          x: actionNode.x + 50, 
-          y: actionNode.y 
-        },
-        zIndex: Math.max(...emails.map(e => e.zIndex)) + 1,
-      }
-      
-      setEmails(prev => [...prev, newEmail])
-      
-      const composeConnector: Connector = {
-        id: Date.now().toString() + '-send',
-        fromEmailId: connectorId,
-        startX: actionNode.x,
-        startY: actionNode.y,
-        endX: newEmail.position.x,
-        endY: newEmail.position.y + 50,
-        text: "Send",
-        state: 'completed',
-        type: 'send',
-        label: 'Sent'
-      }
-      setConnectors(prev => [...prev, composeConnector])
-      
-      setConnectors(prev => prev.map(c => 
-        c.id === connectorId 
-          ? { ...c, state: 'completed', label: 'Composed' }
-          : c
-      ))
-      
-      handleComposeCancel()
-      deleteConnector(connectorId)
-    }
-  }, [composeData, emails, handleComposeCancel, deleteConnector])
-
-  const handleActionClick = useCallback((actionId: string, connectorId: string) => {
-    if (actionId === 'compose') {
-      setComposeMode(connectorId)
-      setComposeConnectorId(connectorId)
-      
-      const connector = connectors.find(c => c.id === connectorId)
-      if (connector?.fromEmailId && connector.actionNodePosition) {
-        const sourceEmail = emails.find(e => e.id === connector.fromEmailId)
-        if (sourceEmail) {
-          const newConnector: Connector = {
-            id: Date.now().toString() + '-compose',
-            fromEmailId: connector.fromEmailId,
-            startX: sourceEmail.position.x + 320,
-            startY: sourceEmail.position.y + 50,
-            endX: connector.actionNodePosition.x,
-            endY: connector.actionNodePosition.y,
-            text: "Compose",
-            state: 'active',
-            type: 'compose',
-            label: 'Compose'
-          }
-          setConnectors(prev => [...prev, newConnector])
+  const handleComposeSend = useCallback(
+    (connectorId: string, actionNode: { x: number; y: number }) => {
+      if (composeData.recipient && composeData.subject && composeData.content) {
+        const newEmail: Email = {
+          id: Date.now().toString(),
+          sender: "You",
+          subject: composeData.subject,
+          preview: composeData.content.substring(0, 100),
+          isRead: false,
+          isStarred: false,
+          isMinimized: false,
+          position: {
+            x: actionNode.x,
+            y: actionNode.y - 100, // Position so vertical center aligns with connector line (email card is ~200px tall)
+          },
+          zIndex: Math.max(...emails.map((e) => e.zIndex)) + 1,
         }
+
+        setEmails((prev) => [...prev, newEmail])
+
+        // Update the existing connector to point to the new email instead of deleting it
+        setConnectors((prev) =>
+          prev.map((c) =>
+            c.id === connectorId
+              ? {
+                  ...c,
+                  // Keep fromEmailId as the original email (don't change it)
+                  endX: newEmail.position.x, // Left edge of email card
+                  endY: newEmail.position.y + 80, // Vertical center of email card (80px from top)
+                  state: "completed",
+                  type: "send",
+                  label: "Sent",
+                  toEmailId: newEmail.id, // Track which email this connector ends at
+                  // Remove actionNodePosition since it's now connected to an email
+                  actionNodePosition: undefined,
+                }
+              : c
+          )
+        )
+
+        handleComposeCancel()
       }
-    }
-    setSearchQuery("")
-  }, [connectors, emails])
+    },
+    [composeData, emails, handleComposeCancel]
+  )
+
+  const handleActionClick = useCallback(
+    (actionId: string, connectorId: string) => {
+      if (actionId === "compose") {
+        setComposeMode(connectorId)
+        setComposeConnectorId(connectorId)
+      }
+      setSearchQuery("")
+    },
+    []
+  )
 
   // Close context menu on click outside
   React.useEffect(() => {
-    if (!contextMenu) return;
-    const close = () => setContextMenu(null);
-    window.addEventListener('mousedown', close);
-    return () => window.removeEventListener('mousedown', close);
-  }, [contextMenu]);
+    if (!contextMenu) return
+    const close = () => setContextMenu(null)
+    window.addEventListener("mousedown", close)
+    return () => window.removeEventListener("mousedown", close)
+  }, [contextMenu])
 
   // Global mouse event listeners for dragging
   React.useEffect(() => {
@@ -361,20 +413,71 @@ export function useEmailConnector() {
         const newY = e.clientY - rect.top - dragOffset.current.y
 
         setEmails((prev) =>
-          prev.map((email) => (email.id === draggedEmail ? { ...email, position: { x: newX, y: newY } } : email)),
+          prev.map((email) =>
+            email.id === draggedEmail
+              ? { ...email, position: { x: newX, y: newY } }
+              : email
+          )
+        )
+
+        // Update connector positions for connectors connected to this email
+        setConnectors((prev) =>
+          prev.map((connector) => {
+            if (connector.fromEmailId === draggedEmail) {
+              // Use the stored offset to maintain the exact same relative position
+              if (
+                connector.startOffsetX !== undefined &&
+                connector.startOffsetY !== undefined
+              ) {
+                const newStartX = newX + connector.startOffsetX
+                const newStartY = newY + connector.startOffsetY
+
+                return {
+                  ...connector,
+                  startX: newStartX,
+                  startY: newStartY,
+                }
+              }
+            }
+
+            // Also update connectors that end at this email (for newly created email cards)
+            if (
+              connector.type === "send" &&
+              connector.toEmailId === draggedEmail
+            ) {
+              return {
+                ...connector,
+                endX: newX, // Left edge of email card
+                endY: newY + 80, // Vertical center of email card (~160px tall card, so 80px from top)
+              }
+            }
+
+            return connector
+          })
         )
       }
 
       if (isCreatingConnector && currentConnector && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect()
+        const mouseX = e.clientX - rect.left
+        const mouseY = e.clientY - rect.top
+
+        // Use the same calculation as the final connector creation
+        // Calculate the position for the left, vertical center of the action node
+        // Action node is 320px wide (w-80), so left edge is at mouseX - 150
+        // Search action node height is ~76px, compose action node height is ~268px
+        // The vertical center is at the mouseY position
+        const actionNodeLeftX = mouseX - 150
+        const actionNodeCenterY = mouseY
+
         setCurrentConnector((prev) =>
           prev
             ? {
                 ...prev,
-                currentX: e.clientX - rect.left,
-                currentY: e.clientY - rect.top,
+                currentX: actionNodeLeftX,
+                currentY: actionNodeCenterY,
               }
-            : null,
+            : null
         )
       }
 
@@ -382,12 +485,18 @@ export function useEmailConnector() {
         const rect = containerRef.current.getBoundingClientRect()
         const newX = e.clientX - rect.left - actionNodeDragOffset.current.x
         const newY = e.clientY - rect.top - actionNodeDragOffset.current.y
+
         setConnectors((prev) =>
           prev.map((c) =>
             c.id === draggedActionNode
-              ? { ...c, actionNodePosition: { x: newX, y: newY }, endX: newX, endY: newY }
-              : c,
-          ),
+              ? {
+                  ...c,
+                  actionNodePosition: { x: newX, y: newY },
+                  endX: newX - 150, // left edge of action node
+                  endY: newY, // vertical center of action node
+                }
+              : c
+          )
         )
       }
     }
@@ -405,21 +514,41 @@ export function useEmailConnector() {
         const endX = e.clientX - rect.left
         const endY = e.clientY - rect.top
 
+        // Calculate the position for the left, vertical center of the action node
+        // Action node is 320px wide (w-80), so left edge is at endX - 150
+        // Action node is positioned with top: actionNode.y - 25, so it's 50px tall
+        // The vertical center is at the actionNode.y position
+        const actionNodeLeftX = endX - 150
+        const actionNodeCenterY = endY
+
+        // Calculate the offset from the email position to the connector start position
+        const email = emails.find((e) => e.id === currentConnector.fromEmailId)
+        const startOffsetX = currentConnector.startX - (email?.position.x || 0)
+        const startOffsetY = currentConnector.startY - (email?.position.y || 0)
+
         const newConnector: Connector = {
           id: Date.now().toString(),
           fromEmailId: currentConnector.fromEmailId,
           startX: currentConnector.startX,
           startY: currentConnector.startY,
-          endX,
-          endY,
+          endX: actionNodeLeftX,
+          endY: actionNodeCenterY,
           text: "",
           actionNodePosition: { x: endX, y: endY },
-          state: 'active',
-          type: 'compose',
-          label: 'Connect'
+          state: "active",
+          type: "compose",
+          label: "Connect",
+          startOffsetX, // Store the offset for dragging updates
+          startOffsetY,
         }
 
-        setConnectors((prev) => [...prev, newConnector])
+        console.log("Creating connector:", newConnector)
+        setConnectors((prev) => {
+          console.log("Previous connectors:", prev)
+          const newConnectors = [...prev, newConnector]
+          console.log("New connectors:", newConnectors)
+          return newConnectors
+        })
         setIsCreatingConnector(false)
         setIsCanvasDragging(false)
         setCurrentConnector(null)
@@ -434,15 +563,21 @@ export function useEmailConnector() {
     }
 
     // Add global listeners
-    window.addEventListener('mousemove', handleGlobalMouseMove)
-    window.addEventListener('mouseup', handleGlobalMouseUp)
+    window.addEventListener("mousemove", handleGlobalMouseMove)
+    window.addEventListener("mouseup", handleGlobalMouseUp)
 
     // Cleanup
     return () => {
-      window.removeEventListener('mousemove', handleGlobalMouseMove)
-      window.removeEventListener('mouseup', handleGlobalMouseUp)
+      window.removeEventListener("mousemove", handleGlobalMouseMove)
+      window.removeEventListener("mouseup", handleGlobalMouseUp)
     }
-  }, [isDragging, draggedEmail, isCreatingConnector, currentConnector, draggedActionNode])
+  }, [
+    isDragging,
+    draggedEmail,
+    isCreatingConnector,
+    currentConnector,
+    draggedActionNode,
+  ])
 
   return {
     // State
@@ -466,7 +601,7 @@ export function useEmailConnector() {
     filteredActions,
     actions,
     containerRef,
-    
+
     // Actions
     setAppStarted,
     setActiveFilter,
@@ -474,12 +609,12 @@ export function useEmailConnector() {
     setComposeMode,
     setComposeConnectorId,
     setComposeData,
-    
+
     // Event handlers
     handleEmailMouseDown,
     handleConnectorStart,
     handleActionNodeMouseDown,
-    
+
     // Email actions
     toggleEmailMinimize,
     starEmail,
@@ -487,16 +622,16 @@ export function useEmailConnector() {
     deleteEmail,
     openContextMenu,
     closeContextMenu,
-    
+
     // Connector actions
     updateConnectorState,
     addConnector,
     deleteConnector,
-    
+
     // Compose actions
     handleComposeDataChange,
     handleComposeCancel,
     handleComposeSend,
     handleActionClick,
   }
-} 
+}

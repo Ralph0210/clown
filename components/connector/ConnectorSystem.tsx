@@ -15,12 +15,23 @@ interface ConnectorSystemProps {
 }
 
 // Function to create curved path
-const createCurvedPath = (startX: number, startY: number, endX: number, endY: number) => {
+const createCurvedPath = (
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number
+) => {
   const dx = endX - startX
   const dy = endY - startY
-  const controlX1 = startX + dx * 0.5
-  const controlY1 = startY + dy * 0.5
-  const controlX2 = startX + dx * 0.5
+
+  // Calculate the distance for control points
+  const distance = Math.sqrt(dx * dx + dy * dy)
+  const controlDistance = Math.min(distance * 0.4, 100) // Limit control point distance
+
+  // Create smooth Bézier curve with proper control points
+  const controlX1 = startX + controlDistance
+  const controlY1 = startY
+  const controlX2 = endX - controlDistance
   const controlY2 = endY
 
   return `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`
@@ -29,28 +40,28 @@ const createCurvedPath = (startX: number, startY: number, endX: number, endY: nu
 // Function to get connector styling based on state and type
 const getConnectorStyle = (connector: Connector) => {
   const baseStyle = {
-    stroke: '#1751CF',
-    strokeWidth: '2',
-    fill: 'none',
+    stroke: "#1751CF",
+    strokeWidth: "2",
+    fill: "none",
   }
 
   switch (connector.state) {
-    case 'pending':
+    case "pending":
       return {
         ...baseStyle,
-        strokeDasharray: '5,5',
-        stroke: '#FFA500', // Orange for pending
+        strokeDasharray: "5,5",
+        stroke: "#FFA500", // Orange for pending
       }
-    case 'completed':
+    case "completed":
       return {
         ...baseStyle,
-        stroke: '#10B981', // Green for completed
+        stroke: "#10B981", // Green for completed
       }
-    case 'error':
+    case "error":
       return {
         ...baseStyle,
-        stroke: '#EF4444', // Red for error
-        strokeDasharray: '3,3',
+        stroke: "#EF4444", // Red for error
+        strokeDasharray: "3,3",
       }
     default:
       return baseStyle
@@ -58,17 +69,35 @@ const getConnectorStyle = (connector: Connector) => {
 }
 
 // Function to get connector label position
-const getConnectorLabelPosition = (startX: number, startY: number, endX: number, endY: number) => {
+const getConnectorLabelPosition = (
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number
+) => {
   const midX = (startX + endX) / 2
   const midY = (startY + endY) / 2
   return { x: midX, y: midY }
 }
 
-export function ConnectorSystem({ connectors, currentConnector }: ConnectorSystemProps) {
+export function ConnectorSystem({
+  connectors,
+  currentConnector,
+}: ConnectorSystemProps) {
+  console.log("ConnectorSystem render - connectors:", connectors)
+  console.log("ConnectorSystem render - currentConnector:", currentConnector)
+
   return (
-    <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 999 }}>
+    <svg
+      className="absolute inset-0 pointer-events-none"
+      style={{ zIndex: 999 }}
+      width="100%"
+      height="100%"
+      preserveAspectRatio="none"
+    >
       {/* Existing connectors */}
       {connectors.map((connector) => {
+        console.log("Rendering connector:", connector)
         const style = getConnectorStyle(connector)
         const labelPos = getConnectorLabelPosition(
           connector.startX,
@@ -76,7 +105,15 @@ export function ConnectorSystem({ connectors, currentConnector }: ConnectorSyste
           connector.actionNodePosition?.x ?? connector.endX,
           connector.actionNodePosition?.y ?? connector.endY
         )
-        
+
+        const pathData = createCurvedPath(
+          connector.startX,
+          connector.startY,
+          connector.actionNodePosition?.x ?? connector.endX,
+          connector.actionNodePosition?.y ?? connector.endY
+        )
+        console.log("Path data:", pathData)
+
         return (
           <g key={connector.id}>
             {/* Draw connector line for all connectors */}
@@ -84,62 +121,21 @@ export function ConnectorSystem({ connectors, currentConnector }: ConnectorSyste
               d={createCurvedPath(
                 connector.startX,
                 connector.startY,
-                connector.actionNodePosition?.x ?? connector.endX,
-                connector.actionNodePosition?.y ?? connector.endY,
+                connector.endX,
+                connector.endY
               )}
               {...style}
-              markerEnd="url(#arrowhead)"
             />
-            
-            {/* Show start circle for all connectors */}
-            <circle 
-              cx={connector.startX} 
-              cy={connector.startY} 
-              r="4" 
-              fill={style.stroke}
+
+            {/* Blue dot at the connection point */}
+            <circle
+              cx={connector.endX}
+              cy={connector.endY}
+              r="4"
+              fill="#1751CF"
               stroke="#15171B"
               strokeWidth="1"
             />
-            
-            {/* Always show end circle */}
-            <circle 
-              cx={connector.actionNodePosition?.x ?? connector.endX} 
-              cy={connector.actionNodePosition?.y ?? connector.endY} 
-              r="4" 
-              fill={style.stroke}
-              stroke="#15171B"
-              strokeWidth="1"
-            />
-            
-            {/* Connector label */}
-            {(connector.label || connector.type) && (
-              <g>
-                {/* Label background */}
-                <rect
-                  x={labelPos.x - 30}
-                  y={labelPos.y - 12}
-                  width="60"
-                  height="24"
-                  rx="12"
-                  fill="#15171B"
-                  stroke={style.stroke}
-                  strokeWidth="1"
-                  opacity="0.9"
-                />
-                {/* Label text */}
-                <text
-                  x={labelPos.x}
-                  y={labelPos.y + 4}
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="10"
-                  fontWeight="500"
-                  className="select-none"
-                >
-                  {connector.label || connector.type}
-                </text>
-              </g>
-            )}
           </g>
         )
       })}
@@ -152,7 +148,7 @@ export function ConnectorSystem({ connectors, currentConnector }: ConnectorSyste
               currentConnector.startX,
               currentConnector.startY,
               currentConnector.currentX,
-              currentConnector.currentY,
+              currentConnector.currentY
             )}
             stroke="#1751CF"
             strokeWidth="2"
@@ -160,23 +156,22 @@ export function ConnectorSystem({ connectors, currentConnector }: ConnectorSyste
             strokeDasharray="5,5"
             opacity="0.7"
           />
-          <circle 
-            cx={currentConnector.startX} 
-            cy={currentConnector.startY} 
-            r="4" 
-            fill="#1751CF"
-            stroke="#15171B"
-            strokeWidth="1"
-          />
         </g>
       )}
 
       {/* Arrow marker definition */}
       <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <marker
+          id="arrowhead"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
           <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
         </marker>
       </defs>
     </svg>
   )
-} 
+}

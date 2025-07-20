@@ -31,7 +31,7 @@ export default function EmailConnector() {
     filteredActions,
     actions,
     containerRef,
-    
+
     // Actions
     setAppStarted,
     setActiveFilter,
@@ -39,12 +39,12 @@ export default function EmailConnector() {
     setComposeMode,
     setComposeConnectorId,
     setComposeData,
-    
+
     // Event handlers
     handleEmailMouseDown,
     handleConnectorStart,
     handleActionNodeMouseDown,
-    
+
     // Email actions
     toggleEmailMinimize,
     starEmail,
@@ -52,12 +52,11 @@ export default function EmailConnector() {
     deleteEmail,
     openContextMenu,
     closeContextMenu,
-    
+
     // Connector actions
     updateConnectorState,
-    addConnector,
     deleteConnector,
-    
+
     // Compose actions
     handleComposeDataChange,
     handleComposeCancel,
@@ -65,73 +64,36 @@ export default function EmailConnector() {
     handleActionClick,
   } = useEmailConnector()
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    // Don't create action patch if dragging is happening
-    if (isCanvasDragging || isDragging || isCreatingConnector || draggedActionNode) {
-      return;
-    }
-
-    // Don't create action patch if a drag just ended (within 100ms)
-    const timeSinceDragEnd = Date.now() - dragEndTime;
-    if (timeSinceDragEnd < 100) {
-      return;
-    }
-
-    // Don't create action patch if clicking on existing elements
-    if (e.target instanceof HTMLElement && 
-        (e.target.closest('.action-dropdown') || 
-         e.target.closest('input') || 
-         e.target.closest('.connector-handle') ||
-         e.target.closest('[data-email]') ||
-         e.target.closest('button'))) {
-      return;
-    }
-
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-
-      const newConnector = {
-        id: Date.now().toString(),
-        fromEmailId: "", // No email connection
-        startX: x,
-        startY: y,
-        endX: x,
-        endY: y,
-        text: "",
-        actionNodePosition: { x, y },
-        state: 'active' as const,
-        type: 'compose' as const,
-        label: 'Connect'
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Only handle canvas clicks for closing context menus or other UI interactions
+      // Action nodes should only be created through connector dragging
+      if (contextMenu) {
+        closeContextMenu()
       }
-
-      addConnector(newConnector)
-    }
-  }, [isCanvasDragging, isDragging, isCreatingConnector, draggedActionNode, dragEndTime, containerRef, addConnector])
+    },
+    [contextMenu, closeContextMenu]
+  )
 
   return (
     <div
       ref={containerRef}
       className="relative h-screen w-full cursor-crosshair overflow-hidden"
-      style={{ backgroundColor: '#15171B' }}
+      style={{ backgroundColor: "#15171B" }}
       onClick={handleCanvasClick}
     >
       {/* Welcome Screen */}
       {!appStarted && (
-        <WelcomeScreen 
-          emails={emails} 
-          onStart={() => setAppStarted(true)} 
-        />
+        <WelcomeScreen emails={emails} onStart={() => setAppStarted(true)} />
       )}
 
       {/* Main Interface */}
       {appStarted && (
         <>
           {/* Filter Chips */}
-          <FilterChips 
-            activeFilter={activeFilter} 
-            onFilterChange={setActiveFilter} 
+          <FilterChips
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
           />
 
           {/* Emails */}
@@ -153,9 +115,9 @@ export default function EmailConnector() {
           ))}
 
           {/* Connector System */}
-          <ConnectorSystem 
-            connectors={connectors} 
-            currentConnector={currentConnector} 
+          <ConnectorSystem
+            connectors={connectors}
+            currentConnector={currentConnector}
           />
 
           {/* Action Nodes */}
@@ -176,6 +138,40 @@ export default function EmailConnector() {
               onDeleteConnector={deleteConnector}
             />
           ))}
+
+          {/* Preview Action Node during connector creation */}
+          {isCreatingConnector && currentConnector && (
+            <div
+              className="absolute z-30 pointer-events-none"
+              style={{
+                left: currentConnector.currentX - 150,
+                top: currentConnector.currentY - 25,
+              }}
+            >
+              <div className="relative">
+                <div className="flex w-80 items-center gap-2 rounded-lg border-2 border-gray-600 bg-gray-800 px-3 py-2 shadow-lg opacity-70">
+                  <div className="h-4 w-4 text-gray-400">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search actions..."
+                    value=""
+                    readOnly
+                    className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import EmailConnector from "../email-connector"
+import EmailConnector from "@/components/email-connector"
 
 export default function Page() {
   return (
