@@ -1,0 +1,66 @@
+---
+alwaysApply: true
+---
+
+# Email Visualization Project
+
+This is an information visualization experiment that demonstrates how emails are written through a series of interactive patches, nodes, and connectors.
+
+## Core Concept
+
+The project visualizes email workflows using:
+- **Email Patches**: Dark-themed cards showing sender, subject, and content
+- **Action Nodes**: Interactive patches for actions like compose, send, forward, etc.
+- **Connectors**: Visual links between patches showing workflow relationships
+
+## Design Principles
+
+### Visual Design
+- **Background**: Dark canvas (`#15171B`) for high contrast
+- **Email Patches**: Dark fill (`#141414`) with colored borders based on state
+- **Border Colors**: 
+  - Purple (`border-purple-300`) for unread emails
+  - Green (`border-green-500`) for read emails  
+  - Yellow (`border-yellow-400`) for starred emails
+- **Border Thickness**: 2px borders on all patches
+
+### Connector System
+- **Stroke Thickness**: 2px connectors between patches
+- **Color**: Blue (`#1751CF`) for all connectors
+- **Style**: Curved Bézier paths with arrowheads
+- **Visibility**: All connectors should be visible, not conditional on `fromEmailId`
+
+### Interaction Patterns
+- **Drag & Drop**: Emails and action nodes are draggable
+- **Minimize/Expand**: Email patches can be collapsed to show only sender/subject
+- **Context Menus**: Right-click on unread badges for actions (Star, Read, Delete)
+- **Filter Chips**: Top-left filters for All, Unread, Read, Starred emails
+
+### Workflow Actions
+- **Compose**: Creates compose form that replaces search patch
+- **Send**: Generates new email patch from compose form
+- **Connector Creation**: Automatic visual connections between related patches
+- **State Management**: Proper tracking of email states and connector relationships
+
+## Technical Implementation
+
+### Key Files
+- [email-connector.tsx](mdc:email-connector.tsx): Main component with all visualization logic
+- [components/ui/](mdc:components/ui/): UI components for forms and interactions
+
+### State Management
+- Email states: `isRead`, `isStarred`, `isMinimized`
+- Connector tracking: `fromEmailId`, `actionNodePosition`
+- UI modes: `composeMode`, `contextMenu`, `activeFilter`
+
+### Event Handling
+- Prevent drag interference on input fields with `e.stopPropagation()`
+- Canvas click detection with time-based drag prevention
+- Proper z-index management for overlapping elements
+
+## User Experience Goals
+
+1. **Visual Clarity**: Clear distinction between different email states and actions
+2. **Workflow Visibility**: Connectors should always show the relationship between patches
+3. **Interactive Feedback**: Immediate visual response to user actions
+4. **Consistent Styling**: Unified dark theme with proper contrast and spacing
